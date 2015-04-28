@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+        http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http.xsd"
+    xmlns:int="http://www.springframework.org/schema/integration"
+    xmlns:int-http="http://www.springframework.org/schema/integration/http">
+
+    <int-http:inbound-gateway request-channel="enricherChannel" path="/services/router/{serviceName}"
+        supported-methods="POST" reply-channel="httpReply">
+        <int-http:header name="serviceName" expression="#pathVariables.serviceName"/>
+    </int-http:inbound-gateway>
+
+    <int:channel id="enricherChannel" />
+
+    <int:header-enricher input-channel="enricherChannel" output-channel="httpChannel">
+        <int:header name="#{T(org.springframework.messaging.MessageHeaders).CONTENT_TYPE}" value="text/xml;charset=utf-8" />
+<!--         <int:header name="SOAPAction" value="''" /> -->
+    </int:header-enricher>
+
+    <int:channel id="httpChannel">
+        <int:interceptors>
+            <int:wire-tap channel="logger" />
+        </int:interceptors>
+    </int:channel>
+
+    <int:logging-channel-adapter id="logger" log-full-message="true" />
+
+    <int-http:outbound-gateway request-channel="httpChannel" reply-channel="httpReply"
+        url="http://localhost:8080/ws" http-method="POST" expected-response-type="java.lang.String" />
+
+    <int:channel id="httpReply">
+        <int:interceptors>
+            <int:wire-tap channel="logger" />
+        </int:interceptors>
+    </int:channel>
+
+</beans>
