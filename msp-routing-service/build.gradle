@@ -23,11 +23,15 @@ dependencies{
     compile "org.springframework:spring-webmvc:$springVersion"
     compile "org.springframework.integration:spring-integration-core:$springIntVersion"
     compile "org.springframework.integration:spring-integration-http:$springIntVersion"
-    compile "log4j:log4j:$log4jVersion"
+    compile "org.springframework.integration:spring-integration-xml:$springIntVersion"
+    compile ('org.slf4j:slf4j-log4j12:1.7.12')
     testCompile "org.springframework.integration:spring-integration-test:$springIntVersion"
     testCompile "org.hamcrest:hamcrest-library:$hamcrestVersion"
 }
 
+war{
+    archiveName = 'routing-service.war'
+}
 task undeploy(type: Delete) {
    delete tomcatDeployment+'/routing-service.war'
  }

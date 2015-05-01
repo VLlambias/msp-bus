@@ -1,21 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
-        http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http.xsd"
-    xmlns:int="http://www.springframework.org/schema/integration"
-    xmlns:int-http="http://www.springframework.org/schema/integration/http">
+    xmlns:int="http://www.springframework.org/schema/integration" xmlns:int-http="http://www.springframework.org/schema/integration/http"
+    xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
+    xsi:schemaLocation="http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http-4.1.xsd
+		http://www.springframework.org/schema/integration/xml http://www.springframework.org/schema/integration/xml/spring-integration-xml-4.1.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-4.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
 
-    <int-http:inbound-gateway request-channel="enricherChannel" path="/services/router/{serviceName}"
+    <int-http:inbound-gateway request-channel="httpInboundChannel" path="/services/router/{serviceName}"
         supported-methods="POST" reply-channel="httpReply">
-        <int-http:header name="serviceName" expression="#pathVariables.serviceName"/>
+        <int-http:header name="serviceName" expression="#pathVariables.serviceName" />
     </int-http:inbound-gateway>
 
+    <int:channel id="httpInboundChannel" />
+
+    <int:service-activator id="wsaValidator" input-channel="httpInboundChannel" output-channel="validatorFilterChannel"
+        requires-reply="true" ref="wsaValidatorBean" />
+
+    <int:channel id="validatorFilterChannel" />
+
+    <int:filter id="wsaValidatorFilter" input-channel="validatorFilterChannel" output-channel="xpathChannel"
+        discard-channel="httpReply" ref="wsaValidationFilterBean" />
+
+    <!-- http://stackoverflow.com/questions/4121318/how-to-create-custom-soap-fault-message-using-spring-web-service -->
+
+    <int:channel id="xpathChannel" />
+
+    <int-xml:xpath-header-enricher id="wsaToXpathEnricher" input-channel="xpathChannel"
+        output-channel="enricherChannel" default-overwrite="true">
+        <int-xml:header name="wsaTo" evaluation-type="STRING_RESULT" overwrite="true"
+            xpath-expression-ref="wsaToXPathExpr" />
+    </int-xml:xpath-header-enricher>
+
+    <int-xml:xpath-expression id="wsaToXPathExpr" expression="/soap:Envelope/soap:Header/wsa:To">
+        <map>
+            <entry key="soap" value="http://schemas.xmlsoap.org/soap/envelope/" />
+            <entry key="wsa" value="http://www.w3.org/2005/08/addressing" />
+        </map>
+    </int-xml:xpath-expression>
+
     <int:channel id="enricherChannel" />
+    <int:wire-tap channel="enricherChannelLogger" pattern="enricherChannel" />
+    <int:logging-channel-adapter id="enricherChannelLogger" expression="'[XPATH]'+#this" />
 
     <int:header-enricher input-channel="enricherChannel" output-channel="httpChannel">
         <int:header name="#{T(org.springframework.messaging.MessageHeaders).CONTENT_TYPE}" value="text/xml;charset=utf-8" />
-<!--         <int:header name="SOAPAction" value="''" /> -->
     </int:header-enricher>
 
     <int:channel id="httpChannel">
@@ -34,5 +63,8 @@
             <int:wire-tap channel="logger" />
         </int:interceptors>
     </int:channel>
+
+    <bean id="wsaValidatorBean" class="gub.msp.bus.routingservice.soap.wsaddressing.WSAValidator" />
+    <bean id="wsaValidationFilterBean" class="gub.msp.bus.routingservice.WSAValidationFilter" />
 
 </beans>
