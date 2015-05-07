@@ -27,15 +27,15 @@ import org.xml.sax.SAXException;
  */
 public class WSAValidatorTest {
 
-    private static final String wsaTo = "http://localhost:18080/routing-service/services/router/rucaf";
+    private static final String WSA_TO = "http://localhost:18080/routing-service/services/router/rucaf";
 
-    private static final String wsaAction = "http://localhost:18080/routing-service/services/router/rucaf/method";
+    private static final String WSA_ACTION = "http://localhost:18080/routing-service/services/router/rucaf/method";
 
     @Test
     public void wsaComplicanceMessage() throws SOAPException, ParserConfigurationException,
             SAXException, IOException {
 
-        final SOAPMessage soapMessage = SOAPMessageTestingUtils.wsaTestMessage(wsaTo, wsaAction);
+        final SOAPMessage soapMessage = SOAPMessageTestingUtils.wsaTestMessage(WSA_TO, WSA_ACTION);
         final String request = SOAPMessageUtils.messageToString(soapMessage);
 
         final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
@@ -78,7 +78,7 @@ public class WSAValidatorTest {
 
         final SOAPMessage soapMessage = SOAPMessageTestingUtils.basicTestMessage();
         SOAPMessageTestingUtils.addHeader(soapMessage, AddressingConstants.WSA_TO,
-                AddressingConstants.WSA_NS, AddressingConstants.WSA_PREFIX, wsaTo);
+                AddressingConstants.WSA_NS, AddressingConstants.WSA_PREFIX, WSA_TO);
         final String request = SOAPMessageUtils.messageToString(soapMessage);
 
         final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
@@ -92,7 +92,7 @@ public class WSAValidatorTest {
             SAXException, IOException {
 
         final String wsaEmptyAction = "";
-        final SOAPMessage soapMessage = SOAPMessageTestingUtils.wsaTestMessage(wsaTo,
+        final SOAPMessage soapMessage = SOAPMessageTestingUtils.wsaTestMessage(WSA_TO,
                 wsaEmptyAction);
         final String request = SOAPMessageUtils.messageToString(soapMessage);
 

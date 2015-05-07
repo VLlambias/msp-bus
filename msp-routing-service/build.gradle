@@ -10,7 +10,6 @@ def hamcrestVersion = '1.3'
 def tomcatHome = 'F:/apache-tomcat-7.0.47'
 def tomcatDeployment = tomcatHome+'/webapps'
 
-
 httpPort = 18080
 stopPort = 19090
 stopKey = "stop"

@@ -32,6 +32,6 @@ public class WSAddressingNamespaceContext implements NamespaceContext {
 
     @Override
     public Iterator<?> getPrefixes(final String namespaceURI) {
-        throw new UnsupportedOperationException(" getPrefix not supported");
+        throw new UnsupportedOperationException("getPrefixes not supported");
     }
 }

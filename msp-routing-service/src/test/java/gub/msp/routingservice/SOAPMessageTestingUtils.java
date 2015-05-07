@@ -21,10 +21,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-/**
- * @author Guzman Llambias
- * 
- */
 public class SOAPMessageTestingUtils {
 
     public static SOAPMessage basicTestMessage() throws SOAPException,
