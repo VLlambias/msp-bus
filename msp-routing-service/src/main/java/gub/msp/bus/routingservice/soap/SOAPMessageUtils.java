@@ -37,6 +37,7 @@ public class SOAPMessageUtils {
             final String reason, final String actor) throws SOAPException {
         final SOAPFault soapFault = message.getSOAPBody().addFault();
         final QName faultName = new QName(SOAPConstants.URI_NS_SOAP_ENVELOPE, code);
+
         soapFault.setFaultCode(faultName);
         soapFault.setFaultActor(actor);
         soapFault.setFaultString(reason);

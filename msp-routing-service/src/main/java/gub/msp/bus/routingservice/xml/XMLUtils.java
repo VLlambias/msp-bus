@@ -18,13 +18,15 @@ import org.xml.sax.SAXException;
  */
 public class XMLUtils {
 
+    private static final String ENCODING = "utf-8";
+
     public static Document stringToDocument(final String string)
             throws ParserConfigurationException, UnsupportedEncodingException, SAXException,
             IOException {
         final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
         final DocumentBuilder builder = factory.newDocumentBuilder();
-        return builder.parse(new InputSource(new ByteArrayInputStream(string.getBytes("utf-8"))));
+        return builder.parse(new InputSource(new ByteArrayInputStream(string.getBytes(ENCODING))));
     }
 
 }
