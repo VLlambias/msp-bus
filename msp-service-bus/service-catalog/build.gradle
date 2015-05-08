@@ -1,0 +1,14 @@
+def c3p0Version = '0.9.5'
+def junitVersion = '4.12'
+def mysqlVersion = '5.1.35'
+
+version = '1.0.0.SNAPSHOT'
+
+dependencies{
+    compile "org.springframework:spring-jdbc:$springVersion"
+    testCompile "org.springframework:spring-test:$springVersion"
+    testCompile "junit:junit:$junitVersion"
+    testRuntime "org.springframework:spring-context:$springVersion"
+    testRuntime "mysql:mysql-connector-java:$mysqlVersion"
+    runtime "com.mchange:c3p0:$c3p0Version"
+}

@@ -1,0 +1,25 @@
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+
+    project.ext.slf4jlog4jVersion = '1.7.12'
+    project.ext.springVersion = '4.1.6.RELEASE'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies{
+        compile "org.slf4j:slf4j-log4j12:$slf4jlog4jVersion"
+    }
+
+    jacoco {
+        toolVersion = "0.7.4.201502262128"
+    }
+
+}
+project (':routing-service'){
+    dependencies{
+        compile project(':service-catalog')
+    }
+}

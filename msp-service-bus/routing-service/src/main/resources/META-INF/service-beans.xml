@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+
+    <bean id="wsaActionEnricherRouterBean" class="gub.msp.bus.routingservice.WSActionEnricherRouter">
+        <constructor-arg name="nsContext" ref="wsaddressingNamespaceContextBean" />
+        <constructor-arg name="xpathExpression" value="/env:Envelope/env:Header/wsa:To" />
+    </bean>
+    <bean id="wsaValidatorBean" class="gub.msp.bus.routingservice.soap.wsaddressing.WSAValidator">
+        <constructor-arg name="nsContext" ref="wsaddressingNamespaceContextBean" />
+    </bean>
+    <bean id="wsaddressingNamespaceContextBean" class="gub.msp.bus.routingservice.soap.wsaddressing.WSAddressingNamespaceContext" />
+    <bean id="wsaValidationFilterBean" class="gub.msp.bus.routingservice.WSAValidationFilter" />
+    <bean id="soapFaultTransformerBean" class="gub.msp.bus.routingservice.SoapFaultTransformer" />
+    <bean id="wsaActionEnricherBean" class="gub.msp.bus.routingservice.WSAddressingEnricher">
+        <constructor-arg name="transformer" ref="soapFaultTransformerBean" />
+    </bean>
+    <bean id="serviceUrlEnricherBean" class="gub.msp.bus.routingservice.ServiceUrlEnricherBean">
+        <constructor-arg name="serviceCatalog" ref="serviceCatalogBean" />
+        <constructor-arg name="nsContext" ref="wsaddressingNamespaceContextBean"/>
+    </bean>
+</beans>
