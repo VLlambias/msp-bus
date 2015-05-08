@@ -29,6 +29,8 @@ public class WSAValidator {
             + ":Envelope/" + SOAPConstants.SOAP_ENV_PREFIX + ":Header/"
             + AddressingConstants.WSA_PREFIX + ":" + AddressingConstants.WSA_ACTION;
 
+    private static final String XPATH_SOAP = "/" + SOAPConstants.SOAP_ENV_PREFIX + ":Envelope";
+
     public WSAValidator(final NamespaceContext nsContext) {
         this.nsContext = nsContext;
     }
@@ -37,19 +39,24 @@ public class WSAValidator {
         Document doc;
         try {
             doc = XMLUtils.stringToDocument(message);
-        } catch (final ParserConfigurationException e) {
+        } catch (final SAXException e) {
             LOG.error("Not an xml message: " + message, e);
-            return WSAValidatorConstants.NOT_XML_MESSAGE;
-        } catch (SAXException | IOException e) {
+            return WSAValidatorConstants.MALFORMED_XML_MESSAGE;
+        } catch (ParserConfigurationException | IOException e) {
             LOG.error("Error processing soap message: " + message, e);
             return WSAValidatorConstants.INTERNAL_SERVER_ERROR;
         }
 
-        if (!validateWsaTo(doc, nsContext)) {
+        if (!validateSoapFormat(doc)) {
+            LOG.error("Malformed soap message: " + message);
+            return WSAValidatorConstants.MALFORMED_SOAP_MESSAGE;
+        }
+
+        if (!validateWsaTo(doc)) {
             LOG.error("Invalid wsaddressing message: " + WSAValidatorConstants.INVALID_WSA_TO);
             return WSAValidatorConstants.INVALID_WSA_TO;
         }
-        if (!validateWsaAction(doc, nsContext)) {
+        if (!validateWsaAction(doc)) {
             LOG.error("Invalid wsaddressing message: " + WSAValidatorConstants.INVALID_WSA_ACTION);
             return WSAValidatorConstants.INVALID_WSA_ACTION;
         }
@@ -57,16 +64,19 @@ public class WSAValidator {
         return WSAValidatorConstants.VALID_MESSAGE;
     }
 
-    private boolean validateWsaTo(final Document doc, final NamespaceContext nsContext) {
-        return existAndNotEmpty(doc, nsContext, XPATH_WSA_TO);
+    private boolean validateSoapFormat(final Document doc) {
+        return existAndNotEmpty(doc, XPATH_SOAP);
     }
 
-    private boolean validateWsaAction(final Document doc, final NamespaceContext nsContext) {
-        return existAndNotEmpty(doc, nsContext, XPATH_WSA_ACTION);
+    private boolean validateWsaTo(final Document doc) {
+        return existAndNotEmpty(doc, XPATH_WSA_TO);
     }
 
-    private boolean existAndNotEmpty(final Document doc, final NamespaceContext nsContext,
-            final String xpathExpr) {
+    private boolean validateWsaAction(final Document doc) {
+        return existAndNotEmpty(doc, XPATH_WSA_ACTION);
+    }
+
+    private boolean existAndNotEmpty(final Document doc, final String xpathExpr) {
         try {
             final String element = XPathUtils.getStringValue(xpathExpr, nsContext, doc);
             if (element != null && !element.isEmpty()) {

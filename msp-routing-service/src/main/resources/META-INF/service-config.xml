@@ -1,88 +1,103 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:int="http://www.springframework.org/schema/integration" xmlns:int-http="http://www.springframework.org/schema/integration/http"
-    xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
+    xmlns:int-xml="http://www.springframework.org/schema/integration/xml" xmlns:util="http://www.springframework.org/schema/util"
     xsi:schemaLocation="http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http-4.1.xsd
 		http://www.springframework.org/schema/integration/xml http://www.springframework.org/schema/integration/xml/spring-integration-xml-4.1.xsd
 		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-4.1.xsd
-		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.1.xsd">
 
-    <int-http:inbound-gateway request-channel="httpInboundChannel" path="/services/router/{serviceName}"
-        supported-methods="POST" reply-channel="httpReply">
+    <int-http:inbound-gateway request-channel="routingServiceHttpInboundChannel" path="/services/router/{serviceName}"
+        supported-methods="POST" reply-channel="routingServiceHttpOutboundChannel">
         <int-http:request-mapping consumes="text/xml" produces="text/xml" />
         <int-http:header name="serviceName" expression="#pathVariables.serviceName" />
     </int-http:inbound-gateway>
 
-    <int:channel id="httpInboundChannel">
+    <int:channel id="routingServiceHttpInboundChannel">
         <int:interceptors>
-            <int:wire-tap channel="httpRequestChannelLogger" />
+            <int:wire-tap channel="routingServiceHttpInboundChannelLogger" />
         </int:interceptors>
     </int:channel>
-    <int:logging-channel-adapter id="httpRequestChannelLogger" expression="'[RQ]: '+#this" />
+    <int:logging-channel-adapter id="routingServiceHttpInboundChannelLogger" expression="'[RQ]: '+#this" />
 
-    <int:header-enricher id="wsaValidator" input-channel="httpInboundChannel" output-channel="validatorFilterChannel"
-        default-overwrite="true">
+    <int:header-enricher id="wsaValidator" input-channel="routingServiceHttpInboundChannel"
+        output-channel="validatorFilterChannel" default-overwrite="true">
         <int:header name="#{T(gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants).ERROR_HEADER_NAME}"
             ref="wsaValidatorBean" method="validate" />
     </int:header-enricher>
 
     <int:channel id="validatorFilterChannel" />
 
-    <int:filter id="wsaValidatorFilter" input-channel="validatorFilterChannel" output-channel="xpathChannel"
+    <int:filter id="wsaValidatorFilter" input-channel="validatorFilterChannel" output-channel="wsaToXpathEnricherChannel"
         discard-channel="discardWsaValidatorFilterChannel" ref="wsaValidationFilterBean" />
 
     <int:channel id="discardWsaValidatorFilterChannel" />
     <int:transformer id="soapFaultBuilder" input-channel="discardWsaValidatorFilterChannel"
-        output-channel="httpReply" ref="soapFaultTransformerBean" />
+        output-channel="routingServiceHttpOutboundChannel" ref="soapFaultTransformerBean" />
 
-    <!-- http://stackoverflow.com/questions/4121318/how-to-create-custom-soap-fault-message-using-spring-web-service -->
+    <int:channel id="wsaHeadersEnricherChannel" />
 
-    <int:channel id="xpathChannel" />
-
-    <int-xml:xpath-header-enricher id="wsaToXpathEnricher" input-channel="xpathChannel"
-        output-channel="enricherChannel" default-overwrite="true">
-        <int-xml:header name="wsaTo" evaluation-type="STRING_RESULT" overwrite="true"
-            xpath-expression-ref="wsaToXPathExpr" />
+    <int-xml:xpath-header-enricher id="wsaToXpathEnricher" input-channel="wsaToXpathEnricherChannel"
+        output-channel="httpHeadersEnricherChannel" default-overwrite="true">
+        <int-xml:header name="#{T(gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants).WSA_REQUEST_TO}"
+            evaluation-type="STRING_RESULT" overwrite="true" xpath-expression-ref="wsaToXPathExpr" />
+        <int-xml:header name="#{T(gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants).WSA_REQUEST_ACTION}"
+            evaluation-type="STRING_RESULT" overwrite="true" xpath-expression-ref="wsaActionXPathExpr" />
     </int-xml:xpath-header-enricher>
 
-    <int-xml:xpath-expression id="wsaToXPathExpr" expression="/soap:Envelope/soap:Header/wsa:To">
-        <map>
-            <entry key="soap" value="http://schemas.xmlsoap.org/soap/envelope/" />
-            <entry key="wsa" value="http://www.w3.org/2005/08/addressing" />
-        </map>
-    </int-xml:xpath-expression>
+    <int-xml:xpath-expression id="wsaToXPathExpr" expression="/soap:Envelope/soap:Header/wsa:To"
+        namespace-map="defaultNamespaces" />
 
-    <int:channel id="enricherChannel" />
-    <int:wire-tap channel="enricherChannelLogger" pattern="enricherChannel" />
-    <int:logging-channel-adapter id="enricherChannelLogger" expression="'[XPATH]'+#this" />
+    <int-xml:xpath-expression id="wsaActionXPathExpr" expression="/soap:Envelope/soap:Header/wsa:Action"
+        namespace-map="defaultNamespaces" />
 
-    <int:header-enricher input-channel="enricherChannel" output-channel="httpChannel">
+
+    <int:channel id="httpHeadersEnricherChannel" />
+
+    <int:header-enricher input-channel="httpHeadersEnricherChannel" output-channel="requestServiceHttpChannel">
         <int:header name="#{T(org.springframework.messaging.MessageHeaders).CONTENT_TYPE}" value="text/xml;charset=utf-8" />
     </int:header-enricher>
 
-    <int:channel id="httpChannel">
+    <int:channel id="requestServiceHttpChannel">
         <int:interceptors>
-            <int:wire-tap channel="logger" />
+            <int:wire-tap channel="requestServiceHttpChannelLogger" />
         </int:interceptors>
     </int:channel>
+    <int:logging-channel-adapter id="requestServiceHttpChannelLogger" expression="'[Svc][RQ]'+#this" />
 
-    <int:logging-channel-adapter id="logger" expression="'[SvcMsg]'+#this" />
-
-    <int-http:outbound-gateway request-channel="httpChannel" reply-channel="httpReply"
+    <int-http:outbound-gateway request-channel="requestServiceHttpChannel" reply-channel="responseServiceHttpChannel"
         url="http://localhost:8080/ws" http-method="POST" expected-response-type="java.lang.String" />
 
-    <int:channel id="httpReply">
+    <int:channel id="responseServiceHttpChannel">
         <int:interceptors>
-            <int:wire-tap channel="httpReplyLogger" />
+            <int:wire-tap channel="responseServiceHttpChannelLogger" />
         </int:interceptors>
     </int:channel>
-    <int:logging-channel-adapter id="httpReplyLogger" expression="'[RS] '+#this" />
+    <int:logging-channel-adapter id="responseServiceHttpChannelLogger" expression="'[Svc][RS] '+#this" />
 
-    <bean id="wsaValidatorBean" class="gub.msp.bus.routingservice.soap.wsaddressing.WSAValidator" >
+    <int:transformer id="wsaActionEnricher" input-channel="responseServiceHttpChannel" output-channel="routingServiceHttpOutboundChannel"
+        ref="wsaActionEnricherBean" />
+
+    <int:channel id="routingServiceHttpOutboundChannel">
+        <int:interceptors>
+            <int:wire-tap channel="routingServiceHttpOutboundChannelLogger" />
+        </int:interceptors>
+    </int:channel>
+    <int:logging-channel-adapter id="routingServiceHttpOutboundChannelLogger" expression="'[RS] '+#this" />
+
+    <bean id="wsaValidatorBean" class="gub.msp.bus.routingservice.soap.wsaddressing.WSAValidator">
         <constructor-arg name="nsContext">
-            <bean class="gub.msp.bus.routingservice.soap.wsaddressing.WSAddressingNamespaceContext"/>
+            <bean class="gub.msp.bus.routingservice.soap.wsaddressing.WSAddressingNamespaceContext" />
         </constructor-arg>
     </bean>
     <bean id="wsaValidationFilterBean" class="gub.msp.bus.routingservice.WSAValidationFilter" />
     <bean id="soapFaultTransformerBean" class="gub.msp.bus.routingservice.SoapFaultTransformer" />
+    <bean id="wsaActionEnricherBean" class="gub.msp.bus.routingservice.WSAddressingEnricher">
+        <constructor-arg name="transformer" ref="soapFaultTransformerBean" />
+    </bean>
+    <util:map id="defaultNamespaces" map-class="java.util.HashMap">
+        <entry key="soap" value="http://schemas.xmlsoap.org/soap/envelope/" />
+        <entry key="wsa" value="http://www.w3.org/2005/08/addressing" />
+    </util:map>
 </beans>

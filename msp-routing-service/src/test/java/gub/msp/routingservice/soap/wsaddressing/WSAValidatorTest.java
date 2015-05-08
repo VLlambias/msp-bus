@@ -23,7 +23,7 @@ import org.xml.sax.SAXException;
 
 /**
  * @author Guzman Llambias
- * 
+ * @since 07/05/2015
  */
 public class WSAValidatorTest {
 
@@ -32,7 +32,7 @@ public class WSAValidatorTest {
     private static final String WSA_ACTION = "http://localhost:18080/routing-service/services/router/rucaf/method";
 
     @Test
-    public void wsaComplicanceMessage() throws SOAPException, ParserConfigurationException,
+    public void wsaComplianceMessage() throws SOAPException, ParserConfigurationException,
             SAXException, IOException {
 
         final SOAPMessage soapMessage = SOAPMessageTestingUtils.wsaTestMessage(WSA_TO, WSA_ACTION);
@@ -77,7 +77,7 @@ public class WSAValidatorTest {
             IOException {
 
         final SOAPMessage soapMessage = SOAPMessageTestingUtils.basicTestMessage();
-        SOAPMessageTestingUtils.addHeader(soapMessage, AddressingConstants.WSA_TO,
+        SOAPMessageUtils.addHeader(soapMessage, AddressingConstants.WSA_TO,
                 AddressingConstants.WSA_NS, AddressingConstants.WSA_PREFIX, WSA_TO);
         final String request = SOAPMessageUtils.messageToString(soapMessage);
 
@@ -100,5 +100,22 @@ public class WSAValidatorTest {
         final String response = wsavalidator.validate(request);
         assertThat("Wrong validation message: " + response, response,
                 equalTo(WSAValidatorConstants.INVALID_WSA_ACTION));
+    }
+
+    @Test
+    public void notXmlMessage() {
+        final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
+        final String response = wsavalidator.validate("abc");
+        assertThat("Wrong validation message: " + response, response,
+                equalTo(WSAValidatorConstants.MALFORMED_XML_MESSAGE));
+
+    }
+
+    @Test
+    public void notSoapMessage() {
+        final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
+        final String response = wsavalidator.validate("<a>e</a>");
+        assertThat("Wrong validation message: " + response, response,
+                equalTo(WSAValidatorConstants.MALFORMED_SOAP_MESSAGE));
     }
 }

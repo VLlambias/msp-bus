@@ -9,11 +9,9 @@ import gub.msp.bus.routingservice.soap.wsaddressing.AddressingConstants;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 
@@ -46,17 +44,10 @@ public class SOAPMessageTestingUtils {
     public static SOAPMessage wsaTestMessage(final String wsaTo, final String wsaAction)
             throws SOAPException, ParserConfigurationException, SAXException, IOException {
         final SOAPMessage message = basicTestMessage();
-        addHeader(message, AddressingConstants.WSA_TO, AddressingConstants.WSA_NS,
+        SOAPMessageUtils.addHeader(message, AddressingConstants.WSA_TO, AddressingConstants.WSA_NS,
                 AddressingConstants.WSA_PREFIX, wsaTo);
-        return addHeader(message, AddressingConstants.WSA_ACTION, AddressingConstants.WSA_NS,
-                AddressingConstants.WSA_PREFIX, wsaAction);
+        return SOAPMessageUtils.addHeader(message, AddressingConstants.WSA_ACTION,
+                AddressingConstants.WSA_NS, AddressingConstants.WSA_PREFIX, wsaAction);
     }
 
-    public static SOAPMessage addHeader(final SOAPMessage message, final String name,
-            final String namespace, final String prefix, final String content) throws SOAPException {
-        final QName qname = new QName(namespace, name, prefix);
-        final SOAPElement wsaHeader = message.getSOAPHeader().addHeaderElement(qname);
-        wsaHeader.addTextNode(content);
-        return message;
-    }
 }

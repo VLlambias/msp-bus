@@ -11,12 +11,14 @@ import java.io.InputStream;
 import javax.xml.namespace.QName;
 import javax.xml.soap.MessageFactory;
 import javax.xml.soap.SOAPConstants;
+import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFault;
 import javax.xml.soap.SOAPMessage;
 
 /**
  * @author Guzman Llambias
+ * @since 07/05/2015
  * 
  */
 public class SOAPMessageUtils {
@@ -61,5 +63,13 @@ public class SOAPMessageUtils {
             SOAPException {
         final InputStream inputStream = new ByteArrayInputStream(message.getBytes());
         return MessageFactory.newInstance().createMessage(null, inputStream);
+    }
+
+    public static SOAPMessage addHeader(final SOAPMessage message, final String name,
+            final String namespace, final String prefix, final String content) throws SOAPException {
+        final QName qname = new QName(namespace, name, prefix);
+        final SOAPElement header = message.getSOAPHeader().addHeaderElement(qname);
+        header.addTextNode(content);
+        return message;
     }
 }

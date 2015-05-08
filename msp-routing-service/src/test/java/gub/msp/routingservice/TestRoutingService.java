@@ -80,7 +80,21 @@ public class TestRoutingService {
 
         assertThat("No wsa:Action header on response", wsaActionResponse,
                 not(isEmptyOrNullString()));
-        assertThat("Content-type is not text/xml", contentType, equalTo(MediaType.TEXT_XML));
+    }
+
+    @Test
+    public void badContentTypeRequestTest() {
+
+    }
+    
+    @Test
+    public void badContentTypeResponseTest() {
+
+    }
+
+    @Test
+    public void noSoapActionTest() {
+
     }
 
     @Test

@@ -20,7 +20,7 @@ import org.springframework.messaging.support.MessageBuilder;
 
 /**
  * @author Guzman Llambias
- * 
+ * @since 07/05/2015
  */
 public class SoapFaultTransformer {
 
@@ -39,6 +39,14 @@ public class SoapFaultTransformer {
         case WSAValidatorConstants.INVALID_WSA_ACTION:
             soapFault = buildSOAPFault(SOAPMessageUtils.CLIENT_CODE,
                     WSAValidatorConstants.INVALID_WSA_ACTION);
+            break;
+        case WSAValidatorConstants.MALFORMED_SOAP_MESSAGE:
+            soapFault = buildSOAPFault(SOAPMessageUtils.CLIENT_CODE,
+                    WSAValidatorConstants.MALFORMED_SOAP_MESSAGE);
+            break;
+        case WSAValidatorConstants.MALFORMED_XML_MESSAGE:
+            soapFault = buildSOAPFault(SOAPMessageUtils.CLIENT_CODE,
+                    WSAValidatorConstants.MALFORMED_XML_MESSAGE);
             break;
         default:
             soapFault = buildSOAPFault(SOAPMessageUtils.SERVER_CODE,
