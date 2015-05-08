@@ -20,17 +20,27 @@ import javax.xml.soap.SOAPFault;
 import javax.xml.soap.SOAPMessage;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.integration.http.HttpHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.xml.sax.SAXException;
 
 /**
  * @author Guzman Llambias
- * 
+ * @since 08/05/2015
  */
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration("/META-INF/service-beans.xml")
 public class SOAPFaultTransformerTest {
+
+    @Autowired
+    private SoapFaultTransformer soapFaultTransformerBean;
 
     @Test
     public void invalidWsaTo() throws SOAPException, ParserConfigurationException, SAXException,
@@ -45,8 +55,7 @@ public class SOAPFaultTransformerTest {
                 .setHeader(WSAValidatorConstants.ERROR_HEADER_NAME,
                         WSAValidatorConstants.INVALID_WSA_TO).build();
 
-        final SoapFaultTransformer sfTransformer = new SoapFaultTransformer();
-        final Message<String> resultMessage = sfTransformer.transform(message);
+        final Message<String> resultMessage = soapFaultTransformerBean.transform(message);
 
         final String strResponse = resultMessage.getPayload();
         final SOAPMessage soapResponse = SOAPMessageUtils.stringToSOAPMessage(strResponse);
@@ -79,8 +88,7 @@ public class SOAPFaultTransformerTest {
                 .setHeader(WSAValidatorConstants.ERROR_HEADER_NAME,
                         WSAValidatorConstants.INVALID_WSA_ACTION).build();
 
-        final SoapFaultTransformer sfTransformer = new SoapFaultTransformer();
-        final Message<String> resultMessage = sfTransformer.transform(message);
+        final Message<String> resultMessage = soapFaultTransformerBean.transform(message);
 
         final String strResponse = resultMessage.getPayload();
         final SOAPMessage soapResponse = SOAPMessageUtils.stringToSOAPMessage(strResponse);

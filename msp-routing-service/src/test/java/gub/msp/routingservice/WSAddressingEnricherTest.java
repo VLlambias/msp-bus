@@ -7,7 +7,6 @@ import static gub.msp.routingservice.matchers.SoapFaultMatcher.isSoapFault;
 import static gub.msp.routingservice.matchers.SoapHeaderMatcher.hasHeader;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
-import gub.msp.bus.routingservice.SoapFaultTransformer;
 import gub.msp.bus.routingservice.WSAddressingEnricher;
 import gub.msp.bus.routingservice.soap.SOAPMessageUtils;
 import gub.msp.bus.routingservice.soap.wsaddressing.AddressingConstants;
@@ -22,8 +21,12 @@ import javax.xml.soap.SOAPHeaderElement;
 import javax.xml.soap.SOAPMessage;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.xml.sax.SAXException;
 
 /**
@@ -31,18 +34,21 @@ import org.xml.sax.SAXException;
  * @since 07/05/2015
  * 
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration("/META-INF/service-beans.xml")
 public class WSAddressingEnricherTest {
 
     private final static String WSA_ACTION_REQUEST = "http://servicios.msp.gub.uy/servicios/rucaf/metodo";
     private static final String EMPTY_WSA_ACTION_REQUEST = "";
 
+    @Autowired
+    private WSAddressingEnricher wsaActionEnricherBean;
+
     @Test
     public void transformTest() throws SOAPException, IOException, ParserConfigurationException,
             SAXException {
-        final WSAddressingEnricher wsaEnricher = new WSAddressingEnricher(
-                new SoapFaultTransformer());
         final Message<String> message = buildTestMessageWithActionHeader(WSA_ACTION_REQUEST);
-        final Message<String> transformedMessage = wsaEnricher.transform(message);
+        final Message<String> transformedMessage = wsaActionEnricherBean.transform(message);
         final String payload = transformedMessage.getPayload();
         final SOAPMessage soapMessage = SOAPMessageUtils.stringToSOAPMessage(payload);
 
@@ -57,13 +63,11 @@ public class WSAddressingEnricherTest {
     @Test
     public void noAddressingActionRequest() throws SOAPException, IOException,
             ParserConfigurationException, SAXException {
-        final WSAddressingEnricher wsaEnricher = new WSAddressingEnricher(
-                new SoapFaultTransformer());
 
         final SOAPMessage soapRequest = SOAPMessageTestingUtils.basicTestMessage();
         final String strSoapRequest = SOAPMessageUtils.messageToString(soapRequest);
         final Message<String> message = MessageBuilder.withPayload(strSoapRequest).build();
-        final Message<String> transformedMessage = wsaEnricher.transform(message);
+        final Message<String> transformedMessage = wsaActionEnricherBean.transform(message);
         final String payload = transformedMessage.getPayload();
         final SOAPMessage soapMessage = SOAPMessageUtils.stringToSOAPMessage(payload);
 
@@ -79,11 +83,9 @@ public class WSAddressingEnricherTest {
     @Test
     public void hasNoActionRequestHeader() throws SOAPException, IOException,
             ParserConfigurationException, SAXException {
-        final WSAddressingEnricher wsaEnricher = new WSAddressingEnricher(
-                new SoapFaultTransformer());
 
         final Message<String> message = buildTestMessageWithoutActionHeader();
-        final Message<String> transformedMessage = wsaEnricher.transform(message);
+        final Message<String> transformedMessage = wsaActionEnricherBean.transform(message);
         final String payload = transformedMessage.getPayload();
         final SOAPMessage soapMessage = SOAPMessageUtils.stringToSOAPMessage(payload);
 
@@ -93,11 +95,9 @@ public class WSAddressingEnricherTest {
     @Test
     public void hasEmptyActionRequestHeader() throws SOAPException, IOException,
             ParserConfigurationException, SAXException {
-        final WSAddressingEnricher wsaEnricher = new WSAddressingEnricher(
-                new SoapFaultTransformer());
 
         final Message<String> message = buildTestMessageWithActionHeader(EMPTY_WSA_ACTION_REQUEST);
-        final Message<String> transformedMessage = wsaEnricher.transform(message);
+        final Message<String> transformedMessage = wsaActionEnricherBean.transform(message);
         final String payload = transformedMessage.getPayload();
         final SOAPMessage soapMessage = SOAPMessageUtils.stringToSOAPMessage(payload);
 
@@ -107,7 +107,6 @@ public class WSAddressingEnricherTest {
                 .getSOAPHeader().addHeaderElement(qname);
         expectedHeader.setTextContent("Response");
         assertThat("No wsa:Action header in soap message", soapMessage, hasHeader(expectedHeader));
-
     }
 
     private Message<String> buildTestMessageWithoutActionHeader() throws SOAPException,

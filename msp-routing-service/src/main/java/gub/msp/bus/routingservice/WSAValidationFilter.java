@@ -9,6 +9,7 @@ import org.springframework.messaging.Message;
 
 /**
  * @author Guzman Llambias
+ * @since 08/05/2015
  * 
  */
 public class WSAValidationFilter {

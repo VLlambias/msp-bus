@@ -9,7 +9,6 @@ import gub.msp.bus.routingservice.soap.SOAPMessageUtils;
 import gub.msp.bus.routingservice.soap.wsaddressing.AddressingConstants;
 import gub.msp.bus.routingservice.soap.wsaddressing.WSAValidator;
 import gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants;
-import gub.msp.bus.routingservice.soap.wsaddressing.WSAddressingNamespaceContext;
 import gub.msp.routingservice.SOAPMessageTestingUtils;
 
 import java.io.IOException;
@@ -19,13 +18,22 @@ import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.xml.sax.SAXException;
 
 /**
  * @author Guzman Llambias
  * @since 07/05/2015
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration("/META-INF/service-beans.xml")
 public class WSAValidatorTest {
+
+    @Autowired
+    private WSAValidator wsaValidatorBean;
 
     private static final String WSA_TO = "http://localhost:18080/routing-service/services/router/rucaf";
 
@@ -38,8 +46,7 @@ public class WSAValidatorTest {
         final SOAPMessage soapMessage = SOAPMessageTestingUtils.wsaTestMessage(WSA_TO, WSA_ACTION);
         final String request = SOAPMessageUtils.messageToString(soapMessage);
 
-        final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
-        final String response = wsavalidator.validate(request);
+        final String response = wsaValidatorBean.validate(request);
         assertThat("Wrong validation message: " + response, response,
                 equalTo(WSAValidatorConstants.VALID_MESSAGE));
     }
@@ -51,8 +58,7 @@ public class WSAValidatorTest {
         final SOAPMessage soapMessage = SOAPMessageTestingUtils.basicTestMessage();
         final String request = SOAPMessageUtils.messageToString(soapMessage);
 
-        final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
-        final String response = wsavalidator.validate(request);
+        final String response = wsaValidatorBean.validate(request);
         assertThat("Wrong validation message: " + response, response,
                 equalTo(WSAValidatorConstants.INVALID_WSA_TO));
     }
@@ -66,8 +72,7 @@ public class WSAValidatorTest {
                 emptyWsaAction);
         final String request = SOAPMessageUtils.messageToString(soapMessage);
 
-        final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
-        final String response = wsavalidator.validate(request);
+        final String response = wsaValidatorBean.validate(request);
         assertThat("Wrong validation message: " + response, response,
                 equalTo(WSAValidatorConstants.INVALID_WSA_TO));
     }
@@ -81,8 +86,7 @@ public class WSAValidatorTest {
                 AddressingConstants.WSA_NS, AddressingConstants.WSA_PREFIX, WSA_TO);
         final String request = SOAPMessageUtils.messageToString(soapMessage);
 
-        final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
-        final String response = wsavalidator.validate(request);
+        final String response = wsaValidatorBean.validate(request);
         assertThat("Wrong validation message: " + response, response,
                 equalTo(WSAValidatorConstants.INVALID_WSA_ACTION));
     }
@@ -96,16 +100,14 @@ public class WSAValidatorTest {
                 wsaEmptyAction);
         final String request = SOAPMessageUtils.messageToString(soapMessage);
 
-        final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
-        final String response = wsavalidator.validate(request);
+        final String response = wsaValidatorBean.validate(request);
         assertThat("Wrong validation message: " + response, response,
                 equalTo(WSAValidatorConstants.INVALID_WSA_ACTION));
     }
 
     @Test
     public void notXmlMessage() {
-        final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
-        final String response = wsavalidator.validate("abc");
+        final String response = wsaValidatorBean.validate("abc");
         assertThat("Wrong validation message: " + response, response,
                 equalTo(WSAValidatorConstants.MALFORMED_XML_MESSAGE));
 
@@ -113,8 +115,7 @@ public class WSAValidatorTest {
 
     @Test
     public void notSoapMessage() {
-        final WSAValidator wsavalidator = new WSAValidator(new WSAddressingNamespaceContext());
-        final String response = wsavalidator.validate("<a>e</a>");
+        final String response = wsaValidatorBean.validate("<a>e</a>");
         assertThat("Wrong validation message: " + response, response,
                 equalTo(WSAValidatorConstants.MALFORMED_SOAP_MESSAGE));
     }
