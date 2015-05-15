@@ -31,14 +31,9 @@ import javax.xml.xpath.XPathExpressionException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestTemplate;
 import org.xml.sax.SAXException;
 
 /**
@@ -52,18 +47,8 @@ public class RoutingServiceIntegTest {
     private static final String WSA_ACTION = "http://servicios.msp.gub.uy/servicio/method";
     private static final String BAD_WSA_TO = "bad wsa:To";
     private static final String SERVICE_URL = "http://localhost:18080/routing-service/services/router/rucaf";
-
-
-    private ResponseEntity<String> sendMessage(final String routingServiceUrl,
-            final String soapMessage) {
-        final HttpHeaders headers = new HttpHeaders();
-        headers.add("soapAction", "\"\"");
-        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_XML_VALUE);
-        final HttpEntity<String> request = new HttpEntity<String>(soapMessage, headers);
-
-        final RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.exchange(routingServiceUrl, HttpMethod.POST, request, String.class);
-    }
+    private static final String USERNAME = "bob";
+    private static final String PASSWORD = "bobspassword";
 
     @Test
     public void basicTest() throws SOAPException, ParserConfigurationException, SAXException,
@@ -71,7 +56,8 @@ public class RoutingServiceIntegTest {
 
         final SOAPMessage soapMessage = SOAPMessageTestingUtils.wsaTestMessage(WSA_TO, WSA_ACTION);
         final String strMessage = SOAPMessageUtils.messageToString(soapMessage);
-        final ResponseEntity<String> response = sendMessage(SERVICE_URL, strMessage);
+        final ResponseEntity<String> response = IntegrationTestUtils.sendMessage(SERVICE_URL,
+                strMessage, USERNAME, PASSWORD);
 
         final SOAPMessage soapResponse = SOAPMessageUtils.stringToSOAPMessage(response.getBody());
 
@@ -111,7 +97,7 @@ public class RoutingServiceIntegTest {
         final SOAPMessage soapMessage = SOAPMessageTestingUtils.basicTestMessage();
         final String strMessage = SOAPMessageUtils.messageToString(soapMessage);
         try {
-            sendMessage(SERVICE_URL, strMessage);
+            IntegrationTestUtils.sendMessage(SERVICE_URL, strMessage, USERNAME, PASSWORD);
             fail("No error occurred");
         } catch (final HttpServerErrorException exception) {
             final String strResponseMessage = exception.getResponseBodyAsString();
@@ -137,7 +123,7 @@ public class RoutingServiceIntegTest {
                 WSA_ACTION);
         final String strMessage = SOAPMessageUtils.messageToString(soapMessage);
         try {
-            sendMessage(SERVICE_URL, strMessage);
+            IntegrationTestUtils.sendMessage(SERVICE_URL, strMessage, USERNAME, PASSWORD);
             fail("No error occurred");
         } catch (final HttpServerErrorException exception) {
             final String strResponseMessage = exception.getResponseBodyAsString();
@@ -164,7 +150,7 @@ public class RoutingServiceIntegTest {
                 AddressingConstants.WSA_NS, AddressingConstants.WSA_PREFIX, WSA_TO);
         final String strMessage = SOAPMessageUtils.messageToString(soapMessage);
         try {
-            sendMessage(SERVICE_URL, strMessage);
+            IntegrationTestUtils.sendMessage(SERVICE_URL, strMessage, USERNAME, PASSWORD);
             fail("No error occurred");
         } catch (final HttpServerErrorException exception) {
             final String strResponseMessage = exception.getResponseBodyAsString();

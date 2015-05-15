@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:security="http://www.springframework.org/schema/security"
+    xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+
+    <security:http use-expressions="true" realm="MSP Interoperability Platform Realm">
+        <security:intercept-url pattern="/services/router/cde" access="hasRole('ROLE_ADMIN')" />
+        <security:intercept-url pattern="/services/router/cnve" access="hasRole('ROLE_USER')" />
+        <security:intercept-url pattern="/services/router/rucaf" access="isFullyAuthenticated()" />
+        <security:intercept-url pattern="/services/router/**" access="denyAll()" />
+        <security:http-basic />
+        <security:csrf disabled="true"/>
+    </security:http>
+
+    <security:authentication-manager>
+        <security:authentication-provider>
+            <security:password-encoder hash="bcrypt" ref="passwordEncoder" />
+            <security:jdbc-user-service data-source-ref="securityServiceDataSourceBean" />
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+    <bean id="securityServiceDataSourceBean" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="dataSourceName" value="SecurityServiceDataSource"/>
+        <property name="driverClass" value="com.mysql.jdbc.Driver"/>
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/bus_security"/>
+        <property name="user" value="root"/>
+        <property name="password" value="mysql"/>
+        <property name="initialPoolSize" value="10"/>
+        <property name="minPoolSize" value="10" />
+        <property name="maxPoolSize" value="20" />
+        <property name="maxStatements" value="10" />
+        <property name="maxIdleTime" value="120000" />
+        <property name="testConnectionOnCheckout" value="true" />
+        <property name="preferredTestQuery" value="select * from users limit 1"/>
+    </bean>
+
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
+</beans>

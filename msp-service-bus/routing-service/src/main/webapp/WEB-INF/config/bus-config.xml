@@ -9,5 +9,7 @@
            http://www.springframework.org/schema/context/spring-context.xsd">
 
     <import resource="classpath:META-INF/service-config.xml"/>
+    <import resource="security-config.xml" />
+    
 
 </beans>
