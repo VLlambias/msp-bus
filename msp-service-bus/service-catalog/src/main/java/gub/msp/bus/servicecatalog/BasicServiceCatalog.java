@@ -31,7 +31,8 @@ public class BasicServiceCatalog implements ServiceCatalog {
         final List<Service> services = jdbcTemplate.query(QUERY_SERVICE_BY_URN,
                 new Object[] { serviceUrn }, new ServiceRowMapper());
         if (services.isEmpty()) {
-            throw new ServiceNotFoundException("No service found with service_urn " + serviceUrn);
+            throw new ServiceNotFoundException("No service found with service_urn '" + serviceUrn
+                    + "'");
         }
 
         final Service service = services.get(0);

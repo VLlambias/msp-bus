@@ -3,8 +3,6 @@
  */
 package gub.msp.routingservice.matchers;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 
@@ -18,12 +16,12 @@ import org.hamcrest.TypeSafeMatcher;
  * @since 15/05/2015
  *
  */
-public class SoapFaultMatcher extends TypeSafeMatcher<SOAPMessage> {
+public class HasFaultMessage extends TypeSafeMatcher<SOAPMessage> {
 
-    private final Matcher<String> actorMatcher;
+    private final String expectedFaultMessage;
 
-    public SoapFaultMatcher(final Matcher<String> actorMatcher) {
-        this.actorMatcher = actorMatcher;
+    public HasFaultMessage(final String message) {
+        this.expectedFaultMessage = message;
     }
 
     @Override
@@ -32,17 +30,17 @@ public class SoapFaultMatcher extends TypeSafeMatcher<SOAPMessage> {
     }
 
     @Override
-    protected boolean matchesSafely(final SOAPMessage soapMessage) {
+    protected boolean matchesSafely(final SOAPMessage message) {
         try {
-            return actorMatcher.matches(soapMessage.getSOAPBody().getFault().getFaultActor());
+            return expectedFaultMessage.equals(message.getSOAPBody().getFault().getFaultString());
         } catch (final SOAPException e) {
             return false;
         }
     }
 
     @Factory
-    public static <T> Matcher<SOAPMessage> hasSoapActor(final String actor) {
-        return new SoapFaultMatcher(equalTo(actor));
+    public static <T> Matcher<SOAPMessage> hasFaultString(final String message) {
+        return new HasFaultMessage(message);
     }
 
 }

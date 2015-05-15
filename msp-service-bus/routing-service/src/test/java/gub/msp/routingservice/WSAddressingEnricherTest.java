@@ -3,7 +3,7 @@
  */
 package gub.msp.routingservice;
 
-import static gub.msp.routingservice.matchers.SoapFaultMatcher.isSoapFault;
+import static gub.msp.routingservice.matchers.IsSoapFault.isSoapFault;
 import static gub.msp.routingservice.matchers.SoapHeaderMatcher.hasHeader;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;

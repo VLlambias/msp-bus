@@ -48,6 +48,10 @@ public class SoapFaultTransformer {
             soapFault = buildSOAPFault(SOAPMessageUtils.CLIENT_CODE,
                     WSAValidatorConstants.MALFORMED_XML_MESSAGE);
             break;
+        case WSAValidatorConstants.SERVICE_NOT_FOUND:
+            soapFault = buildSOAPFault(SOAPMessageUtils.SERVER_CODE,
+                    WSAValidatorConstants.SERVICE_NOT_FOUND);
+            break;
         default:
             soapFault = buildSOAPFault(SOAPMessageUtils.SERVER_CODE,
                     WSAValidatorConstants.INTERNAL_SERVER_ERROR);

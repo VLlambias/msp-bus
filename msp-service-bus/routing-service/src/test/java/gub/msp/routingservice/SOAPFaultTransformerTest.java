@@ -3,6 +3,10 @@
  */
 package gub.msp.routingservice;
 
+import static gub.msp.routingservice.matchers.HasFaultMessage.hasFaultString;
+import static gub.msp.routingservice.matchers.IsFaultCode.isServerCodeFault;
+import static gub.msp.routingservice.matchers.IsSoapFault.isSoapFault;
+import static gub.msp.routingservice.matchers.SoapFaultMatcher.hasSoapActor;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -141,6 +145,26 @@ public class SOAPFaultTransformerTest {
                 soapFault.getFaultActor(), equalTo(SOAPMessageUtils.BUS_ACTOR_URI));
         assertThat("Invalid soap subcode: " + soapFault.getFaultString(),
                 soapFault.getFaultString(), equalTo(WSAValidatorConstants.MALFORMED_XML_MESSAGE));
+    }
+
+    @Test
+    public void serviceNotFoundTest() throws SOAPException, ParserConfigurationException,
+            SAXException, IOException {
+        final Message<String> message = buildTestMessage(WSAValidatorConstants.SERVICE_NOT_FOUND);
+
+        final Message<String> resultMessage = soapFaultTransformerBean.transform(message);
+
+        final String strResponse = resultMessage.getPayload();
+        final SOAPMessage soapResponse = SOAPMessageUtils.stringToSOAPMessage(strResponse);
+
+        assertThat("Http status code not 500",
+                (HttpStatus) resultMessage.getHeaders().get(HttpHeaders.STATUS_CODE),
+                equalTo(HttpStatus.INTERNAL_SERVER_ERROR));
+        assertThat("Not a soap fault", soapResponse, isSoapFault());
+        assertThat("Invalid soap actor", soapResponse, hasSoapActor(SOAPMessageUtils.BUS_ACTOR_URI));
+        assertThat("Not a server code soap fault", soapResponse, isServerCodeFault());
+        assertThat("Invalid soap error message ", soapResponse,
+                hasFaultString(WSAValidatorConstants.SERVICE_NOT_FOUND));
     }
 
     private Message<String> buildTestMessage(final String errorHeader) throws SOAPException,

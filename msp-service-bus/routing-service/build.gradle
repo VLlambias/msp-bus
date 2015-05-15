@@ -19,6 +19,15 @@ repositories{
     mavenCentral()
 }
 
+sourceSets {
+    integrationTest {
+        java.srcDir file('src/integTest/java')
+        resources.srcDir file('src/integTest/resources')
+        compileClasspath = sourceSets.main.output + sourceSets.test.output + configurations.testRuntime
+        runtimeClasspath = output + compileClasspath
+    }
+}
+
 dependencies{
     compile "org.springframework:spring-webmvc:$springVersion"
     compile "org.springframework.integration:spring-integration-core:$springIntVersion"
@@ -32,15 +41,29 @@ dependencies{
 war{
     archiveName = 'routing-service.war'
 }
-task undeploy(type: Delete) {
-   delete tomcatDeployment+'/routing-service.war'
- }
-
-task deploy(dependsOn: ':build', type: Copy) {
-    from "$buildDir/libs"
-    into tomcatDeployment
-}
 
 jacoco {
     toolVersion = "0.7.4.201502262128"
 }
+
+test{
+    exclude '**/*IntegTest.class'
+}
+
+task undeploy(type: Delete) {
+   delete tomcatDeployment+'/routing-service.war'
+ }
+
+task deploy(dependsOn: ':routing-service:build', type: Copy) {
+    from "$buildDir/libs"
+    into tomcatDeployment
+}
+
+task integrationTest(type: Test){
+    include '**/*IntegTest.class'
+    reports.html.destination = file("$reports.html.destination/integration")
+    reports.junitXml.destination = file("$reports.junitXml.destination/integration")
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+}
+check.dependsOn integrationTest

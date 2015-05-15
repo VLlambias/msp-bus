@@ -29,4 +29,6 @@ public class WSAValidatorConstants {
 
     public static final String MALFORMED_SOAP_MESSAGE = "Malformed soap message";
 
+    public static final String SERVICE_NOT_FOUND = "Service not found on registry. Check wsa:To header";
+
 }

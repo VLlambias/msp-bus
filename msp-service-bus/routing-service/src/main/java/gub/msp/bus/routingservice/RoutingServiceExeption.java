@@ -15,4 +15,8 @@ public class RoutingServiceExeption extends Exception {
     public RoutingServiceExeption(final String message, final Throwable exception) {
         super(message, exception);
     }
+
+    public RoutingServiceExeption(final String message) {
+        super(message);
+    }
 }

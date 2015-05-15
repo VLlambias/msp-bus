@@ -2,6 +2,8 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'jacoco'
 
+    group 'gub.msp'
+
     project.ext.slf4jlog4jVersion = '1.7.12'
     project.ext.springVersion = '4.1.6.RELEASE'
 
