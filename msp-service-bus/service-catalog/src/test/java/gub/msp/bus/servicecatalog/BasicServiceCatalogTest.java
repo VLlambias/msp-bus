@@ -21,7 +21,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  *
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("/META-INF/service-catalog-beans.xml")
+@ContextConfiguration("/META-INF/test-service-catalog-app.xml")
 public class BasicServiceCatalogTest {
 
     @Autowired
