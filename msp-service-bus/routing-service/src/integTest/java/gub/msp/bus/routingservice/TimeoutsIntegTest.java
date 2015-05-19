@@ -104,7 +104,6 @@ public class TimeoutsIntegTest {
             final String response = exception.getResponseBodyAsString();
             final SOAPMessage soapResponse = SOAPMessageUtils.stringToSOAPMessage(response);
 
-            System.out.println(response);
             assertThat("Http cod is not 500 Internal Server Error", exception.getStatusCode(),
                     equalTo(HttpStatus.INTERNAL_SERVER_ERROR));
             assertThat("Not a soap fault", soapResponse, isSoapFault());
