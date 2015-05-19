@@ -88,7 +88,7 @@ public class TimeoutsIntegTest {
                     hasSoapActor(SOAPMessageUtils.BUS_ACTOR_URI));
             assertThat("Not a server code soap fault", soapResponse, isServerCodeFault());
             assertThat("Invalid soap error message ", soapResponse,
-                    hasFaultString(WSAValidatorConstants.DESTINATION_UNREACHABLE));
+                    hasFaultString(WSAValidatorConstants.SERVICE_TIMEOUT));
         }
     }
 
@@ -104,7 +104,6 @@ public class TimeoutsIntegTest {
             final String response = exception.getResponseBodyAsString();
             final SOAPMessage soapResponse = SOAPMessageUtils.stringToSOAPMessage(response);
 
-            System.out.println(response);
             assertThat("Http cod is not 500 Internal Server Error", exception.getStatusCode(),
                     equalTo(HttpStatus.INTERNAL_SERVER_ERROR));
             assertThat("Not a soap fault", soapResponse, isSoapFault());
