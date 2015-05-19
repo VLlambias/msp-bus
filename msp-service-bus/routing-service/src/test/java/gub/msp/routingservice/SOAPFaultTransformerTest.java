@@ -167,6 +167,46 @@ public class SOAPFaultTransformerTest {
                 hasFaultString(WSAValidatorConstants.SERVICE_NOT_FOUND));
     }
 
+    @Test
+    public void serviceTimeoutTest() throws SOAPException, ParserConfigurationException,
+            SAXException, IOException {
+        final Message<String> message = buildTestMessage(WSAValidatorConstants.SERVICE_TIMEOUT);
+
+        final Message<String> resultMessage = soapFaultTransformerBean.transform(message);
+
+        final String strResponse = resultMessage.getPayload();
+        final SOAPMessage soapResponse = SOAPMessageUtils.stringToSOAPMessage(strResponse);
+
+        assertThat("Http status code not 500",
+                (HttpStatus) resultMessage.getHeaders().get(HttpHeaders.STATUS_CODE),
+                equalTo(HttpStatus.INTERNAL_SERVER_ERROR));
+        assertThat("Not a soap fault", soapResponse, isSoapFault());
+        assertThat("Invalid soap actor", soapResponse, hasSoapActor(SOAPMessageUtils.BUS_ACTOR_URI));
+        assertThat("Not a server code soap fault", soapResponse, isServerCodeFault());
+        assertThat("Invalid soap error message ", soapResponse,
+                hasFaultString(WSAValidatorConstants.SERVICE_TIMEOUT));
+    }
+
+    @Test
+    public void destinationUnreachableTest() throws SOAPException, ParserConfigurationException,
+            SAXException, IOException {
+        final Message<String> message = buildTestMessage(WSAValidatorConstants.DESTINATION_UNREACHABLE);
+
+        final Message<String> resultMessage = soapFaultTransformerBean.transform(message);
+
+        final String strResponse = resultMessage.getPayload();
+        final SOAPMessage soapResponse = SOAPMessageUtils.stringToSOAPMessage(strResponse);
+
+        assertThat("Http status code not 500",
+                (HttpStatus) resultMessage.getHeaders().get(HttpHeaders.STATUS_CODE),
+                equalTo(HttpStatus.INTERNAL_SERVER_ERROR));
+        assertThat("Not a soap fault", soapResponse, isSoapFault());
+        assertThat("Invalid soap actor", soapResponse, hasSoapActor(SOAPMessageUtils.BUS_ACTOR_URI));
+        assertThat("Not a server code soap fault", soapResponse, isServerCodeFault());
+        assertThat("Invalid soap error message ", soapResponse,
+                hasFaultString(WSAValidatorConstants.DESTINATION_UNREACHABLE));
+    }
+
     private Message<String> buildTestMessage(final String errorHeader) throws SOAPException,
             ParserConfigurationException, SAXException, IOException {
         final String wsaTo = "http://localhost:18080/routing-service/services/router/rucaf";

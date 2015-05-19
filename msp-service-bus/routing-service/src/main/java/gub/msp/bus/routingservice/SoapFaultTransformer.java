@@ -52,6 +52,14 @@ public class SoapFaultTransformer {
             soapFault = buildSOAPFault(SOAPMessageUtils.SERVER_CODE,
                     WSAValidatorConstants.SERVICE_NOT_FOUND);
             break;
+        case WSAValidatorConstants.SERVICE_TIMEOUT:
+            soapFault = buildSOAPFault(SOAPMessageUtils.SERVER_CODE,
+                    WSAValidatorConstants.SERVICE_TIMEOUT);
+            break;
+        case WSAValidatorConstants.DESTINATION_UNREACHABLE:
+            soapFault = buildSOAPFault(SOAPMessageUtils.SERVER_CODE,
+                    WSAValidatorConstants.DESTINATION_UNREACHABLE);
+            break;
         default:
             soapFault = buildSOAPFault(SOAPMessageUtils.SERVER_CODE,
                     WSAValidatorConstants.INTERNAL_SERVER_ERROR);

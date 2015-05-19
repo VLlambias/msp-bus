@@ -6,7 +6,7 @@
 
     <bean id="wsaActionEnricherRouterBean" class="gub.msp.bus.routingservice.WSActionEnricherRouter">
         <constructor-arg name="nsContext" ref="wsaddressingNamespaceContextBean" />
-        <constructor-arg name="xpathExpression" value="/env:Envelope/env:Header/wsa:To" />
+        <constructor-arg name="xpathExpression" value="${wsaToXpathExpression}" />
     </bean>
     <bean id="wsaValidatorBean" class="gub.msp.bus.routingservice.soap.wsaddressing.WSAValidator">
         <constructor-arg name="nsContext" ref="wsaddressingNamespaceContextBean" />
@@ -19,6 +19,26 @@
     </bean>
     <bean id="serviceUrlEnricherBean" class="gub.msp.bus.routingservice.ServiceUrlEnricherBean">
         <constructor-arg name="serviceCatalog" ref="serviceCatalogBean" />
-        <constructor-arg name="nsContext" ref="wsaddressingNamespaceContextBean"/>
+        <constructor-arg name="nsContext" ref="wsaddressingNamespaceContextBean" />
+    </bean>
+    <bean id="serviceUnavailableEnricherBean" class="gub.msp.bus.routingservice.ServiceUnavailableEnricherBean" />
+    <bean id="httpOutboundRequestFactoryBean"
+      class="org.springframework.http.client.HttpComponentsClientHttpRequestFactory">
+        <property name="readTimeout" value="${httpOutboundReadTimeout}"/>
+        <property name="connectTimeout" value="${httpOutboundConnectionTimeout}"/>
+    </bean>
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="properties" ref="routingServiceProperties" />
+    </bean>
+
+    <bean id="routingServiceProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="locations">
+            <list>
+                <value>classpath:/config.properties</value>
+                <value>classpath:/integ-test-config.properties</value>
+            </list>
+        </property>
+        <property name="ignoreResourceNotFound" value="true"/>
     </bean>
 </beans>

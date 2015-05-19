@@ -11,7 +11,8 @@
     <import resource="service-beans.xml" />
 
     <int-http:inbound-gateway request-channel="routingServiceHttpInboundChannel" path="/services/router/{serviceName}"
-        supported-methods="POST" reply-channel="routingServiceHttpOutboundChannel" error-channel="routingServiceErrorChannel">
+        supported-methods="POST" reply-channel="routingServiceHttpOutboundChannel" error-channel="errorChannel"
+        reply-timeout="${routingServiceReplyTimeout}">
         <int-http:request-mapping consumes="text/xml" produces="text/xml" />
         <int-http:header name="serviceName" expression="#pathVariables.serviceName" />
     </int-http:inbound-gateway>
@@ -32,10 +33,10 @@
     <int:channel id="validatorFilterChannel" />
 
     <int:filter id="wsaValidatorFilter" input-channel="validatorFilterChannel" output-channel="wsaHeadersEnricherChannel"
-        discard-channel="errorChannel" ref="wsaValidationFilterBean" />
+        discard-channel="discardWsaValidatorChannel" ref="wsaValidationFilterBean" />
 
-    <int:channel id="errorChannel" />
-    <int:transformer id="soapFaultBuilder" input-channel="errorChannel" output-channel="routingServiceHttpOutboundChannel"
+    <int:channel id="discardWsaValidatorChannel" />
+    <int:transformer id="soapFaultBuilder" input-channel="discardWsaValidatorChannel" output-channel="routingServiceHttpOutboundChannel"
         ref="soapFaultTransformerBean" />
 
     <int:channel id="wsaHeadersEnricherChannel" />
@@ -63,8 +64,9 @@
     </int:channel>
     <int:logging-channel-adapter id="requestServiceHttpChannelLogger" expression="'[Svc][RQ]'+#this" />
 
-    <int-http:outbound-gateway request-channel="requestServiceHttpChannel" reply-channel="responseServiceHttpChannel"
-        url-expression="headers.serviceUrl" http-method="POST" expected-response-type="java.lang.String" />
+    <int-http:outbound-gateway id="httpOutboundGateway" request-channel="requestServiceHttpChannel" reply-channel="responseServiceHttpChannel"
+        url-expression="headers.serviceUrl" http-method="POST" expected-response-type="java.lang.String" charset="UTF-8"
+        request-factory="httpOutboundRequestFactoryBean" />
 
     <int:channel id="responseServiceHttpChannel">
         <int:interceptors>
@@ -74,11 +76,11 @@
     <int:logging-channel-adapter id="responseServiceHttpChannelLogger" expression="'[Svc][RS] '+#this" />
 
     <int:router id="wsaResponseActionEnricherRouter" input-channel="responseServiceHttpChannel"
-        default-output-channel="errorChannel" ref="wsaActionEnricherRouterBean" method="route">
+        default-output-channel="discardWsaValidatorChannel" ref="wsaActionEnricherRouterBean" method="route">
         <int:mapping value="#{T(gub.msp.bus.routingservice.WSActionEnricherRouter).WSA_ACTION_AVAILABLE}"
             channel="routingServiceHttpOutboundChannel" />
         <int:mapping value="#{T(gub.msp.bus.routingservice.WSActionEnricherRouter).NO_WSA_ACTION}" channel="wsaResponseActionEnricherChannel" />
-        <int:mapping value="#{T(gub.msp.bus.routingservice.WSActionEnricherRouter).INTERNAL_ERROR}" channel="errorChannel" />
+        <int:mapping value="#{T(gub.msp.bus.routingservice.WSActionEnricherRouter).INTERNAL_ERROR}" channel="discardWsaValidatorChannel" />
     </int:router>
 
     <int:channel id="wsaResponseActionEnricherChannel" />
@@ -94,32 +96,46 @@
     <int:logging-channel-adapter id="routingServiceHttpOutboundChannelLogger" expression="'[RS] '+#this" />
 
     <util:map id="defaultNamespaces" map-class="java.util.HashMap">
-        <entry key="soap" value="http://schemas.xmlsoap.org/soap/envelope/" />
-        <entry key="wsa" value="http://www.w3.org/2005/08/addressing" />
+        <entry key="env" value="#{T(javax.xml.soap.SOAPConstants).URI_NS_SOAP_1_1_ENVELOPE}" />
+        <entry key="wsa" value="#{T(gub.msp.bus.routingservice.soap.wsaddressing.AddressingConstants).WSA_NS}" />
     </util:map>
-    <int-xml:xpath-expression id="wsaToXPathExpr" expression="/soap:Envelope/soap:Header/wsa:To"
+    <int-xml:xpath-expression id="wsaToXPathExpr" expression="${wsaToXpathExpression}"
         namespace-map="defaultNamespaces" />
 
-    <int-xml:xpath-expression id="wsaActionXPathExpr" expression="/soap:Envelope/soap:Header/wsa:Action"
+    <int-xml:xpath-expression id="wsaActionXPathExpr" expression="${wsaActionXpathExpression}"
         namespace-map="defaultNamespaces" />
 
-    <int:channel id="routingServiceErrorChannel"/>
-    <int:exception-type-router input-channel="routingServiceErrorChannel"
-        default-output-channel="internalErrorChannel">
+    <int:exception-type-router input-channel="errorChannel" default-output-channel="internalErrorChannel">
         <int:mapping exception-type="gub.msp.bus.servicecatalog.ServiceNotFoundException" channel="serviceNotFoundChannel" />
+        <int:mapping exception-type="org.springframework.web.client.HttpClientErrorException" channel="serviceUnavailableChannel" />
+        <int:mapping exception-type="java.net.ConnectException" channel="serviceUnavailableChannel" />
+        <int:mapping exception-type="java.net.SocketTimeoutException" channel="serviceTimeoutChannel"/>
     </int:exception-type-router>
 
     <int:channel id="internalErrorChannel" />
     <int:header-enricher id="internalErrorEnricher" input-channel="internalErrorChannel"
-        output-channel="errorChannel">
+        output-channel="discardWsaValidatorChannel">
         <int:header name="#{T(gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants).ERROR_HEADER_NAME}"
             value="#{T(gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants).INTERNAL_SERVER_ERROR }" />
     </int:header-enricher>
 
     <int:channel id="serviceNotFoundChannel" />
-    <int:header-enricher id="internalErrorEnricher" input-channel="serviceNotFoundChannel"
-        output-channel="errorChannel">
+    <int:header-enricher id="serviceNotFoundEnricher" input-channel="serviceNotFoundChannel"
+        output-channel="discardWsaValidatorChannel">
         <int:header name="#{T(gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants).ERROR_HEADER_NAME}"
             value="#{T(gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants).SERVICE_NOT_FOUND}" />
+    </int:header-enricher>
+
+    <int:channel id="serviceUnavailableChannel" />
+    <int:header-enricher id="serviceUnavailableEnricher" input-channel="serviceUnavailableChannel"
+        output-channel="discardWsaValidatorChannel">
+        <int:header name="#{T(gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants).ERROR_HEADER_NAME}"
+            ref="serviceUnavailableEnricherBean" method="enrich" />
+    </int:header-enricher>
+
+    <int:channel id="serviceTimeoutChannel"/>
+    <int:header-enricher id="serviceTimeoutEnricher" input-channel="serviceTimeoutChannel" output-channel="discardWsaValidatorChannel">
+        <int:header name="#{T(gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants).ERROR_HEADER_NAME}"
+            value="#{T(gub.msp.bus.routingservice.soap.wsaddressing.WSAValidatorConstants).SERVICE_TIMEOUT}" />
     </int:header-enricher>
 </beans>

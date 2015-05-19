@@ -31,4 +31,7 @@ public class WSAValidatorConstants {
 
     public static final String SERVICE_NOT_FOUND = "Service not found on registry. Check wsa:To header";
 
+    public static final String DESTINATION_UNREACHABLE = "Destination unreachable: No route can be determined to reach the destination role defined by the WS-Addressing To header";
+
+    public static final String SERVICE_TIMEOUT = "Destination timeout: Could not process destination service response";
 }

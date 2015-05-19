@@ -26,7 +26,7 @@ public class HasFaultMessage extends TypeSafeMatcher<SOAPMessage> {
 
     @Override
     public void describeTo(final Description description) {
-        description.appendText("A soap fault");
+        description.appendText(expectedFaultMessage);
     }
 
     @Override
