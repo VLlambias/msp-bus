@@ -1,1 +1,1 @@
-include 'routing-service', 'service-catalog'
+include 'routing-service', 'service-catalog', 'audit-service'

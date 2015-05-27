@@ -63,6 +63,8 @@ jacoco {
 
 test{
     exclude '**/*IntegTest.class'
+    reports.html.destination = file ("$reports.html.destination/unit")
+    reports.junitXml.destination = file("$reports.junitXml.destination/unit")
 }
 
 task undeploy(type: Delete) {
